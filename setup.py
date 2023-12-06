@@ -1,6 +1,3 @@
-import os
-import sys
-
 try:
     from setuptools import setup
 except ImportError:
@@ -21,15 +18,21 @@ requires = [
 
 setup(
     name="pokemontools",
-    version="1.6.0",
+    version="1.6.1a",
     description="Tools for compiling and disassembling Pokémon Red and Pokémon Crystal.",
     long_description=open("README.md", "r").read(),
     license="BSD",
-    author="Bryan Bishop",
-    author_email="kanzure@gmail.com",
-    url="https://github.com/kanzure/pokemon-reverse-engineering-tools",
-    packages=["pokemontools", "redtools"],
-    package_dir={"pokemontools": "pokemontools", "redtools": "redtools"},
+    author="Joey Navarro",
+    author_email="",
+    url="https://github.com/josephnavarro/pokemon-reverse-engineering-tools",
+    packages=[
+        "pokemontools",
+        "redtools",
+    ],
+    package_dir={
+        "pokemontools": "pokemontools",
+        "redtools": "redtools"
+    },
     include_package_data=True,
     install_requires=requires,
     platforms="any",
@@ -38,6 +41,5 @@ setup(
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
     ]
 )
