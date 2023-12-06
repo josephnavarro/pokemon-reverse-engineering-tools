@@ -1,15 +1,16 @@
 """
 Configuration
 """
-
 import os
+
 
 class ConfigException(Exception):
     """
     Configuration error. Maybe a missing config variable.
     """
 
-class Config(object):
+
+class Config:
     """
     The Config class handles all configuration for pokemontools. Other classes
     and functions use a Config object to determine where expected files can be
@@ -27,8 +28,7 @@ class Config(object):
                 self._config[key] = value
             else:
                 raise ConfigException(
-                    "Can't store \"{0}\" in configuration because the key conflicts with an existing property."
-                    .format(key)
+                    f"Can't store \"{key}\" in configuration because the key conflicts with an existing property."
                 )
 
         if "path" not in self._config:
@@ -53,5 +53,5 @@ class Config(object):
             return self._config[key]
         else:
             raise ConfigException(
-                "no config found for \"{0}\"".format(key)
+                f"no config found for \"{key}\""
             )

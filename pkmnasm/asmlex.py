@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
 import ply.lex as lex
-import sys, os
+import sys
 
 
 FILENAME = '' # Current filename
@@ -156,22 +153,20 @@ _tokens = _tokens \
 
 
 def get_uniques(l):
-    ''' Returns a list with no repeated elements.
+    ''' Returns a list with no repeated elements. Maintains order.
     '''
-    result = []
-
-    for i in l:
-        if i not in result:
-            result.append(i)
-
-    return result
+    m = []
+    for _ in l:
+        if _ not in m:
+            m.append(_)
+    return m
     
 
 
 tokens = get_uniques(_tokens)
         
 
-class Lexer(object):
+class Lexer:
     ''' Own class lexer to allow multiple instances.
     This lexer is just a wrapper of the current FILESTACK[-1] lexer
     '''
@@ -182,21 +177,17 @@ class Lexer(object):
     # -------------- TOKEN ACTIONS --------------
 
 
-    def __set_lineno(self, value):
-        ''' Setter for lexer.lineno
-        '''
-        self.lex.lineno = value
-
-
-    def __get_lineno(self):
-        ''' Getter for lexer.lineno
-        '''
+    @property
+    def lineno(self):
         if self.lex is None:
             return 0
+        else:
+            return self.lex.lineno
+    
 
-        return self.lex.lineno
-
-    lineno = property(__get_lineno, __set_lineno)
+    @lineno.setter
+    def lineno(self, value):
+        self.lex.lineno = value
 
 
     def t_INITIAL_preproc_skip(self, t):
@@ -327,25 +318,36 @@ class Lexer(object):
         r'\]'
         return t
 
+
     def t_LSHIFT(self, t):
         r'<<'
         return t
+    
+
     def t_RSHIFT(self, t):
         r'>>'
         return t
 
+
     def t_BITWISE_OR(self, t):
         r'\|'
         return t
+    
+
     def t_BITWISE_AND(self, t):
         r'\&'
         return t
+    
+
     def t_BITWISE_COMPLEMENT(self, t):
         r'~'
         return t
+    
+
     def t_LOGICAL_NOT(self, t):
         r'\!'
         return t
+
 
     def t_PLUS(self, t):
         r'\+'
@@ -393,7 +395,7 @@ class Lexer(object):
     def t_INITIAL_preproc_error(self, t):
         ''' error handling rule
         '''
-        self.error("illegal character '%s'" % t.value[0])
+        self.error(f"illegal character {t.value[0]}")
 
 
     def t_INITIAL_preproc_CONTINUE(self, t):
@@ -455,7 +457,8 @@ class Lexer(object):
         '''
         i = token.lexpos
         while i > 0:
-            if self.input_data[i - 1] == '\n': break
+            if self.input_data[i - 1] == '\n':
+                break
             i -= 1
     
         column = token.lexpos - i + 1
@@ -467,13 +470,13 @@ class Lexer(object):
         ''' Prints an error msg.
         '''
         #print '%s:%i %s' % (FILENAME, self.lex.lineno, str)
-        print('%s:%s %s' % (FILENAME, "?", str))
+        print(f'{FILENAME}:? {str}')
     
     
     def error(self, str):
         ''' Prints an error msg, and exits.
         '''
-        self.msg('Error: %s' % str)
+        self.msg(f'Error: {str}')
     
         sys.exit(1)
     
@@ -481,14 +484,19 @@ class Lexer(object):
     def warning(self, str):
         ''' Emmits a warning and continue execution.
         '''
-        self.msg('Warning: %s' % str)
+        self.msg(f'Warning: {str}')
+
 
 # Needed for states 
 tmp = lex.lex(object = Lexer(), lextab = 'zxbasmlextab')
 
+
 if __name__ == '__main__':
     FILENAME = sys.argv[1]
-    tmp.input(open(sys.argv[1]).read())
+    
+    with open(sys.argv[1]) as f:
+        tmp.input(f.read())
+        
     tok = tmp.token()
     while tok:
         print(tok)

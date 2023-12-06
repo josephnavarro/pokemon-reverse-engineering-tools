@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 VBA automation
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 import os
-import sys
 import re
 import string
 from copy import copy
@@ -15,12 +10,11 @@ from copy import copy
 from pokemontools.chars import (
     chars,
 )
-
 from pokemontools.map_names import (
     map_names,
 )
-
 from . import keyboard
+
 
 # just use a default config for now until the globals are removed completely
 import pokemontools.configuration as configuration
@@ -34,14 +28,17 @@ if not os.path.exists(rom_path):
 
 import vba_wrapper
 
+
 button_masks = vba_wrapper.core.VBA.button_masks
 button_combiner = vba_wrapper.core.VBA.button_combine
+
 
 def calculate_bank(address):
     """
     Which bank does this address exist in?
     """
-    return address / 0x4000
+    return address // 0x4000
+
 
 def calculate_address(address):
     """
@@ -52,6 +49,7 @@ def calculate_address(address):
     """
     return (address % 0x4000) + 0x4000
 
+
 def translate_chars(charz):
     """
     Translate a string from the in-game format to readable form. This is
@@ -61,6 +59,7 @@ def translate_chars(charz):
     for each in charz:
         result += chars[each]
     return result
+
 
 def translate_text(text, chars=chars):
     """
@@ -78,7 +77,8 @@ def translate_text(text, chars=chars):
             )
     return output
 
-class crystal(object):
+
+class crystal:
     """
     Just a simple namespace to store a bunch of functions for Pokémon Crystal.
     There can only be one running instance of the emulator per process because
@@ -385,7 +385,7 @@ class crystal(object):
             if force:
                 # wipe the parent routine array
                 mem[NumScriptParents] = 0
-                for i in xrange(num_possible_parents * len_parent):
+                for i in range(num_possible_parents * len_parent):
                     mem[ScriptParents + i] = 0
             else:
                 raise Exception("a script is already running, use force=True")
@@ -402,7 +402,7 @@ class crystal(object):
 
         mem[ScriptBank]    = bank
         mem[ScriptPos]     = address % 0x100
-        mem[ScriptPos+1]   = address / 0x100
+        mem[ScriptPos+1]   = address // 0x100
 
         self.vba.memory = mem
 
@@ -545,7 +545,7 @@ class crystal(object):
 
     def disable_triggers(self):
         self.vba.write_memory_at(0x23c4, 0xAF)
-        self.vba.write_memory_at(0x23d0, 0xAF);
+        self.vba.write_memory_at(0x23d0, 0xAF)
 
     def disable_callbacks(self):
         self.vba.write_memory_at(0x23f2, 0xAF)

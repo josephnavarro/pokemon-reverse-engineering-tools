@@ -1,23 +1,25 @@
-# -*- coding: utf-8 -*-
+from typing import Dict, Union
 
-item_constants = {
-1: 'MASTER_BALL',
-2: 'ULTRA_BALL',
-3: 'BRIGHTPOWDER',
-4: 'GREAT_BALL',
-5: 'POKE_BALL',
-7: 'BICYCLE',
-8: 'MOON_STONE',
-9: 'ANTIDOTE',
-10: 'BURN_HEAL',
-11: 'ICE_HEAL',
-12: 'AWAKENING',
-13: 'PARLYZ_HEAL',
-14: 'FULL_RESTORE',
-15: 'MAX_POTION',
-16: 'HYPER_POTION',
-17: 'SUPER_POTION',
-18: 'POTION',
+
+item_constants: Dict[int, str] = {
+    1: 'MASTER_BALL',
+    2: 'ULTRA_BALL',
+    3: 'BRIGHTPOWDER',
+    4: 'GREAT_BALL',
+    5: 'POKE_BALL',
+    # 6 ????
+    7: 'BICYCLE',
+    8: 'MOON_STONE',
+    9: 'ANTIDOTE',
+    10: 'BURN_HEAL',
+    11: 'ICE_HEAL',
+    12: 'AWAKENING',
+    13: 'PARLYZ_HEAL',
+    14: 'FULL_RESTORE',
+    15: 'MAX_POTION',
+    16: 'HYPER_POTION',
+    17: 'SUPER_POTION',
+    18: 'POTION',
 19: 'ESCAPE_ROPE',
 20: 'REPEL',
 21: 'MAX_ELIXER',
@@ -192,49 +194,57 @@ item_constants = {
 215: 'TM_24',
 216: 'TM_25',
 217: 'TM_26',
-218: 'TM_27',
-219: 'TM_28',
-221: 'TM_29',
-222: 'TM_30',
-223: 'TM_31',
-224: 'TM_32',
-225: 'TM_33',
-226: 'TM_34',
-227: 'TM_35',
-228: 'TM_36',
-229: 'TM_37',
-230: 'TM_38',
-231: 'TM_39',
-232: 'TM_40',
-233: 'TM_41',
-234: 'TM_42',
-235: 'TM_43',
-236: 'TM_44',
-237: 'TM_45',
-238: 'TM_46',
-239: 'TM_47',
-240: 'TM_48',
-241: 'TM_49',
-242: 'TM_50',
-243: 'HM_01',
-244: 'HM_02',
-245: 'HM_03',
-246: 'HM_04',
-247: 'HM_05',
-248: 'HM_06',
-249: 'HM_07',
+    218: 'TM_27',
+    219: 'TM_28',
+    221: 'TM_29',
+    222: 'TM_30',
+    223: 'TM_31',
+    224: 'TM_32',
+    225: 'TM_33',
+    226: 'TM_34',
+    227: 'TM_35',
+    228: 'TM_36',
+    229: 'TM_37',
+    230: 'TM_38',
+    231: 'TM_39',
+    232: 'TM_40',
+    233: 'TM_41',
+    234: 'TM_42',
+    235: 'TM_43',
+    236: 'TM_44',
+    237: 'TM_45',
+    238: 'TM_46',
+    239: 'TM_47',
+    240: 'TM_48',
+    241: 'TM_49',
+    242: 'TM_50',
+    243: 'HM_01',
+    244: 'HM_02',
+    245: 'HM_03',
+    246: 'HM_04',
+    247: 'HM_05',
+    248: 'HM_06',
+    249: 'HM_07',
 }
 
-def find_item_label_by_id(id):
+
+def find_item_label_by_id(id: int) -> Union[str, None]:
     if id in item_constants.keys():
         return item_constants[id]
-    else: return None
+    else:
+        return None
 
-def generate_item_constants():
-    """make a list of items to put in constants.asm"""
-    output = ""
-    for (id, item) in item_constants.items():
-        val = ("$%.2x"%id).upper()
-        while len(item)<13: item+= " "
-        output += item + " EQU " + val + "\n"
+
+def generate_item_constants() -> str:
+    """
+    make a list of items to put in constants.asm
+    """
+    output: str = ""
+
+    for (id, item) in item_constants.items():  # type: int, str
+        val = f"${id:.2x}".upper()
+        while len(item) < 13:
+            item += " "
+        output += f"{item} EQU {val}\n"
+
     return output

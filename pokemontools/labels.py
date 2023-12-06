@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 Various label/line-related functions.
 """
-from __future__ import absolute_import
-
 import os
 import json
 import logging
@@ -11,7 +8,8 @@ import logging
 from . import pointers
 from . import sym
 
-class Labels(object):
+
+class Labels:
     """
     Store all labels.
     """
@@ -37,11 +35,13 @@ class Labels(object):
 
         self.labels = sym.read_symfile(self.path)
 
+
 def find_symfile_in_dir(path):
     for filename in os.listdir(path):
         if os.path.splitext(filename)[1] == '.sym':
             return filename
     return None
+
 
 def remove_quoted_text(line):
     """get rid of content inside quotes
@@ -55,6 +55,7 @@ def remove_quoted_text(line):
         second = line.find("\'", first+1)
         line = line[0:first] + line[second+1:]
     return line
+
 
 def line_has_comment_address(line, returnable={}, bank=None):
     """checks that a given line has a comment
@@ -166,6 +167,7 @@ def line_has_comment_address(line, returnable={}, bank=None):
     returnable["address"] = pointers.calculate_pointer(offset, bank=bank)
     return True
 
+
 def get_address_from_line_comment(line, bank=None):
     """
     wrapper for line_has_comment_address
@@ -175,6 +177,7 @@ def get_address_from_line_comment(line, bank=None):
     if not result:
         return False
     return returnable["address"]
+
 
 def line_has_label(line):
     """returns True if the line has an asm label"""
@@ -196,6 +199,7 @@ def line_has_label(line):
         return False
     return True
 
+
 def get_label_from_line(line):
     """returns the label from the line"""
     #check if the line has a label
@@ -204,6 +208,7 @@ def get_label_from_line(line):
     #split up the line
     label = line.split(":")[0]
     return label
+
 
 def find_labels_without_addresses(asm):
     """scans the asm source and finds labels that are unmarked"""

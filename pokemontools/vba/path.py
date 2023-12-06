@@ -5,7 +5,6 @@ path finding implementation
 2) For each NPC/item, mark nearby nodes as members of that NPC's threat zone
    (note that they can be members of multiple zones simultaneously).
 """
-
 import pokemontools.configuration
 config = pokemontools.configuration.Config()
 
@@ -44,15 +43,15 @@ DIRECTIONS = {
     "RIGHT": "RIGHT",
 }
 
-class Node(object):
+class Node:
     """
     A ``Node`` represents a position on the map.
     """
 
     def __init__(self, position, threat_zones=None, contents=None):
         self.position = position
-        self.y = position[0]
-        self.x = position[1]
+        self.y: int = position[0]
+        self.x: int = position[1]
 
         # by default a node is not a member of any threat zones
         self.threat_zones = threat_zones or set()
@@ -109,12 +108,13 @@ class Node(object):
         the player walking here.
         """
         for content in self.contents:
-            if self.content.y == self.y and self.content.x == self.x:
+            if content.y == self.y and content.x == self.x:
                 return True
         else:
             return False
+        
 
-class MapObstacle(object):
+class MapObstacle:
     """
     A ``MapObstacle`` represents an item, npc or trainer on the map.
     """
@@ -229,7 +229,8 @@ class MapObstacle(object):
             self._sight_range = self._get_sight_range()
         return self._sight_range
 
-class ThreatZone(object):
+
+class ThreatZone:
     """
     A ``ThreatZone`` represents the area surrounding a moving or turning object
     that the player can try to avoid.
@@ -502,6 +503,7 @@ class ThreatZone(object):
 
         return penalty
 
+
 def create_graph(some_map):
     """
     Creates the array of nodes representing the in-game map.
@@ -541,7 +543,8 @@ def create_graph(some_map):
 
     return nodes
 
-class Map(object):
+
+class Map:
     """
     The ``Map`` class provides an interface for reading the currently loaded
     map.
@@ -611,7 +614,8 @@ class Map(object):
 
         return map_image
 
-class PathPlanner(object):
+
+class PathPlanner:
     """
     Generic path finding implementation.
     """
@@ -627,6 +631,7 @@ class PathPlanner(object):
         path.
         """
         return [(0, 0), (1, 0), (1, 1), (1, 2), (1, 3)]
+
 
 def plan_and_draw_path_on(map_group_id=1, map_id=1, initial_location=(0, 0), final_location=(2, 2), config=config):
     """

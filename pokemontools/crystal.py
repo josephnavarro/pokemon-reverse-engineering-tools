@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 utilities to help disassemble pokémon crystal
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 import os
 import sys
 import inspect
@@ -13,24 +9,30 @@ from copy import copy, deepcopy
 import subprocess
 import logging
 
+try:
+    from subprocess import CalledProcessError
+except ImportError:
+    class CalledProcessError(Exception):
+        pass
+
 # for capwords
 import string
 
 # for python2.6
-if not hasattr(json, "dumps"):
-    json.dumps = json.write
+# if not hasattr(json, "dumps"):
+#     json.dumps = json.write
 
-spacing = "\t"
+spacing: str = "\t"
 
 lousy_dragon_shrine_hack = [0x18d079, 0x18d0a9, 0x18d061, 0x18d091]
 
 # table of pointers to map groups
 # each map group contains some number of map headers
-map_group_pointer_table = 0x94000
-map_group_count = 26
-map_group_offsets = []
-map_header_byte_size = 9
-second_map_header_byte_size = 12
+map_group_pointer_table: int = 0x94000
+map_group_count: int = 26
+map_group_offsets: list = []
+map_header_byte_size: int = 9
+second_map_header_byte_size: int = 12
 
 # event segment sizes
 warp_byte_size = 5
@@ -93,7 +95,7 @@ script_parse_table = interval_map.IntervalMap()
 
 def is_script_already_parsed_at(address):
     """looks up whether or not a script is parsed at a certain address"""
-    if script_parse_table[address] == None:
+    if script_parse_table[address] is None:
         return False
     return True
 
@@ -182,8 +184,10 @@ def load_map_group_offsets(map_group_pointer_table, map_group_count, rom=None):
     return map_group_offsets
 
 def calculate_pointer_from_bytes_at(address, bank=False):
-    """calculates a pointer from 2 bytes at a location
-    or 3-byte pointer [bank][2-byte pointer] if bank=True"""
+    """
+    calculates a pointer from 2 bytes at a location
+    or 3-byte pointer [bank][2-byte pointer] if bank=True
+    """
     if bank == True:
         bank = ord(rom[address])
         address += 1
@@ -195,15 +199,21 @@ def calculate_pointer_from_bytes_at(address, bank=False):
         pass
     else:
         raise Exception("bad bank given to calculate_pointer_from_bytes_at")
+    
     byte1 = ord(rom[address])
     byte2 = ord(rom[address+1])
     temp  = byte1 + (byte2 << 8)
+    
     if temp == 0:
         return None
+    
     return pointers.calculate_pointer(temp, bank)
 
+
 def clean_up_long_info(long_info):
-    """cleans up some data from parse_script_engine_script_at formatting issues"""
+    """
+    cleans up some data from parse_script_engine_script_at formatting issues
+    """
     long_info = str(long_info)
     # get rid of the first newline
     if long_info[0] == "\n":
@@ -222,11 +232,13 @@ def clean_up_long_info(long_info):
         long_info = "\n".join(new_lines)
     return long_info
 
+
 def get_pokemon_constant_by_id(id):
     if id == 0:
         return None
     else:
         return pokemon_constants.pokemon_constants[id]
+
 
 def command_debug_information(command_byte=None, map_group=None, map_id=None, address=0, info=None, long_info=None, pksv_name=None):
     "used to help debug in parse_script_engine_script_at"
@@ -237,8 +249,9 @@ def command_debug_information(command_byte=None, map_group=None, map_id=None, ad
     #info1 += "    long_info: " + long_info
     return info1
 
+
 all_texts = []
-class TextScript(object):
+class TextScript:
     """
     A text is a sequence of bytes (and sometimes commands). It's not the same
     thing as a Script. The bytes are translated into characters based on the
@@ -248,16 +261,42 @@ class TextScript(object):
     see: http://hax.iimarck.us/files/scriptingcodes_eng.htm#InText
     """
     base_label = "UnknownText_"
-    def __init__(self, address, map_group=None, map_id=None, debug=False, label=None, force=False, show=None, script_parse_table=None, text_command_classes=None):
+    def __init__(
+            self,
+            address,
+            map_group=None,
+            map_id=None,
+            debug=False,
+            label=None,
+            force=False,
+            show=None,
+            script_parse_table=None,
+            text_command_classes=None,
+        ):
         self.text_command_classes = text_command_classes
         self.script_parse_table = script_parse_table
 
         self.address = address
         # $91, $84, $82, $54, $8c
         # 0x19768c is a a weird problem?
-        if address in [0x26ef, 0x26f2, 0x6ee, 0x1071, 0x5ce33, 0x69523, 0x7ee98, 0x72176, 0x7a578, 0x19c09b, 0x19768c]:
+        if address in [
+            0x26ef,
+            0x26f2,
+            0x6ee,
+            0x1071,
+            0x5ce33,
+            0x69523,
+            0x7ee98,
+            0x72176,
+            0x7a578,
+            0x19c09b,
+            0x19768c,
+        ]:
             return None
-        self.map_group, self.map_id, self.debug = map_group, map_id, debug
+        
+        self.map_group = map_group
+        self.map_id = map_id
+        self.debug = debug
         self.dependencies = None
         self.commands = None
         self.force = force
@@ -267,35 +306,58 @@ class TextScript(object):
 
         if not label:
             label = self.base_label + hex(address)
-        self.label = Label(name=label, address=address, object=self)
+        self.label = Label(
+            name=label,
+            address=address,
+            object=self,
+        )
 
         self.parse()
 
-    def is_valid(self):
-        return not (self.address in [0x26ef, 0x26f2, 0x6ee, 0x1071, 0x5ce33, 0x69523, 0x7ee98, 0x72176, 0x7a578, 0x19c09b, 0x19768c])
+    def is_valid(
+            self,
+            *,
+            __invalids=set([
+                0x26ef,
+                0x26f2,
+                0x6ee,
+                0x1071,
+                0x5ce33,
+                0x69523,
+                0x7ee98,
+                0x72176,
+                0x7a578,
+                0x19c09b,
+                0x19768c,
+            ])
+        ) -> bool:
+        return not (self.address in __invalids)
 
     # hmm this looks exactly like Script.get_dependencies (which makes sense..)
-    def get_dependencies(self, recompute=False, global_dependencies=set()):
-        if self.address in [0x26ef, 0x26f2, 0x6ee, 0x1071, 0x5ce33, 0x69523, 0x7ee98, 0x72176, 0x7a578, 0x19c09b, 0x19768c]:
+    def get_dependencies(self, recompute=False, global_dependencies=set()) -> list:
+        if not self.is_valid():
             return []
 
-        if self.dependencies != None and not recompute:
+        elif (self.dependencies is not None) and not recompute:
             global_dependencies.update(self.dependencies)
             return self.dependencies
+        else:
+            dependencies = []
 
-        dependencies = []
+            for command in self.commands:
+                deps = command.get_dependencies(
+                    recompute=recompute,
+                    global_dependencies=global_dependencies
+                )
+                dependencies.extend(deps)
 
-        for command in self.commands:
-            deps = command.get_dependencies(recompute=recompute, global_dependencies=global_dependencies)
-            dependencies.extend(deps)
-
-        self.dependencies = dependencies
-        return self.dependencies
+            self.dependencies = dependencies
+            return self.dependencies
 
     # this is almost an exact copy of Script.parse
     # with the exception of using text_command_classes instead of command_classes
     def parse(self):
-        if self.address in [0x26ef, 0x26f2, 0x6ee, 0x1071, 0x5ce33, 0x69523, 0x7ee98, 0x72176, 0x7a578, 0x19c09b, 0x19768c]:
+        if not self.is_valid():
             return None
 
         text_command_classes = self.text_command_classes
@@ -318,7 +380,7 @@ class TextScript(object):
         rom = load_rom()
 
         # in the event that the script parsing fails.. it would be nice to leave evidence
-        script_parse_table[start_address:start_address+1] = "incomplete NewTextScript.parse"
+        script_parse_table[start_address:start_address + 1] = "incomplete NewTextScript.parse"
 
         # start with a blank script
         commands = []
@@ -339,7 +401,7 @@ class TextScript(object):
                 if class_[1].id == cur_byte:
                     scripting_command_class = class_[1]
 
-            if self.address == 0x9c00e and self.debug:
+            if (self.address == 0x9c00e) and self.debug:
                 if current_address > 0x9c087:
                     logging.debug("self.commands is: {commands}".format(commands=commands))
                     for num in [0, 1]:
@@ -354,11 +416,23 @@ class TextScript(object):
                     raise Exception("going beyond the bounds for this text script")
 
             # no matching command found
-            if scripting_command_class == None:
-                raise Exception("unable to parse text command $%.2x in the text script at %s at %s" % (cur_byte, hex(start_address), hex(current_address)))
+            if scripting_command_class is None:
+                raise Exception(
+                    "unable to parse text command ${0:.2x} in the text script at {1:s} at {2:s}".format(
+                        cur_byte,
+                        hex(start_address),
+                        hex(current_address),
+                    )
+                )
 
             # create an instance of the command class and let it parse its parameter bytes
-            cls = scripting_command_class(address=current_address, map_group=self.map_group, map_id=self.map_id, debug=self.debug, force=self.force)
+            cls = scripting_command_class(
+                address=current_address,
+                map_group=self.map_group,
+                map_id=self.map_id,
+                debug=self.debug,
+                force=self.force,
+            )
 
             if self.debug:
                 logging.debug(cls.to_asm())
@@ -397,7 +471,7 @@ class TextScript(object):
         # just some debugging..
         if self.debug:
             last_address = self.last_address
-            logging.debug("TextScript last_address == {0}".format(hex(last_address)))
+            logging.debug(f"TextScript last_address == {hex(last_address)}")
             #assert last_address != 0x5db06, "TextScript.parse somehow has a text with a last_address of 0x5db06 instead of 0x5db07"
 
         # store the script in the global table/map thing
@@ -413,28 +487,43 @@ class TextScript(object):
 
         return commands
 
-    def to_asm(self):
-        if self.address in [0x26ef, 0x26f2, 0x6ee, 0x1071, 0x5ce33, 0x69523, 0x7ee98, 0x72176, 0x7a578, 0x19c09b, 0x19768c]:
+    def to_asm(self) -> str:
+        if not self.is_valid():
             return None
+        else:
+            asm_output = "\n".join([command.to_asm() for command in self.commands])
+            return asm_output
 
-        asm_output = "\n".join([command.to_asm() for command in self.commands])
-        return asm_output
 
-def parse_text_engine_script_at(address, map_group=None, map_id=None, debug=True, show=True, force=False):
+def parse_text_engine_script_at(address, map_group=None, map_id=None, debug=True, show=True, force=False) -> TextScript:
     """parses a text-engine script ("in-text scripts")
     http://hax.iimarck.us/files/scriptingcodes_eng.htm#InText
     see parse_text_at2, parse_text_at, and process_00_subcommands
     """
     if is_script_already_parsed_at(address) and not force:
         return script_parse_table[address]
-    return TextScript(address, map_group=map_group, map_id=map_id, debug=debug, show=show, force=force, script_parse_table=script_parse_table, text_command_classes=text_command_classes)
+    else:
+        return TextScript(
+            address,
+            map_group=map_group,
+            map_id=map_id,
+            debug=debug,
+            show=show,
+            force=force,
+            script_parse_table=script_parse_table,
+            text_command_classes=text_command_classes,
+        )
+
 
 def find_text_addresses():
-    """returns a list of text pointers
-    useful for testing parse_text_engine_script_at"""
+    """
+    returns a list of text pointers
+    useful for testing parse_text_engine_script_at
+    """
     return TextScript.find_addresses()
 
-class EncodedText(object):
+
+class EncodedText:
     """a sequence of bytes that, when decoded, represent readable text
     based on the chars table from preprocessor.py and other places"""
     base_label = "UnknownRawText_"
@@ -445,15 +534,22 @@ class EncodedText(object):
             self.bank = bank
         else:
             self.bank = pointers.calculate_bank(address)
-        self.map_group, self.map_id, self.debug = map_group, map_id, debug
+        
+        self.map_group = map_group
+        self.map_id = map_id
+        self.debug = debug
+
         if not label:
             label = self.base_label + hex(address)
+
         self.label = Label(name=label, address=address, object=self)
         self.dependencies = None
+
         self.parse()
+
         script_parse_table[self.address : self.last_address] = self
 
-    def get_dependencies(self, recompute=False, global_dependencies=set()):
+    def get_dependencies(self, recompute=False, global_dependencies=set()) -> list:
         return []
 
     def parse(self):
@@ -478,30 +574,29 @@ class EncodedText(object):
 
         self.last_address = self.end_address = end_address
 
-    def to_asm(self):
+    def to_asm(self) -> str:
         return "\""+self.text+"\""
 
     @staticmethod
-    def process_00_subcommands(start_address, end_address, debug=True):
-        """split this text up into multiple lines
-        based on subcommands ending each line"""
+    def process_00_subcommands(start_address: int, end_address: int, debug: bool = True) -> dict:
+        """
+        split this text up into multiple lines
+        based on subcommands ending each line
+        """
         if debug:
             logging.debug(
-                "process_00_subcommands({start}, {end})"
-                .format(
-                    start=hex(start_address),
-                    end=hex(end_address),
-                )
+                f"process_00_subcommands({hex(start_address)}, {hex(end_address)})"
             )
-        lines = {}
+        lines: dict = {}
         subsection = rom[start_address:end_address]
 
-        line_count = 0
-        current_line = []
+        line_count: int = 0
+        current_line: list = []
+
         for pbyte in subsection:
-            byte = ord(pbyte)
+            byte: int = ord(pbyte)
             current_line.append(byte)
-            if  byte == 0x4f or byte == 0x51 or byte == 0x55:
+            if (byte == 0x4f) or (byte == 0x51) or (byte == 0x55):
                 lines[line_count] = current_line
                 current_line = []
                 line_count += 1
@@ -512,25 +607,34 @@ class EncodedText(object):
         return lines
 
     @staticmethod
-    def from_bytes(bytes, debug=True, japanese=False):
-        """assembles a string based on bytes looked up in the chars table"""
-        line = ""
-        if japanese: charset = chars.jap_chars
-        else: charset = chars.chars
+    def from_bytes(bytes, debug: bool = True, japanese: bool = False) -> str:
+        """
+        assembles a string based on bytes looked up in the chars table
+        """
+        line: str = ""
+        if japanese:
+            charset = chars.jap_chars
+        else:
+            charset = chars.chars
+        
         for byte in bytes:
             if type(byte) != int:
+                # Ensures we're working with an int
+                # TODO: Would isinstance() work here?
                 byte = ord(byte)
+
             if byte in charset.keys():
                 line += charset[byte]
             elif debug:
-                logging.debug("byte not known: {0}".format(hex(byte)))
+                logging.debug(f"byte not known: {hex(byte)}")
+
         return line
 
     @staticmethod
-    def parse_text_at(address, count=10, debug=True, japanese=False):
+    def parse_text_at(address, count=10, debug=True, japanese=False) -> str:
         """returns a string of text from an address
         this does not handle text commands"""
-        output = ""
+        output: str = ""
         commands = process_00_subcommands(address, address+count, debug=debug)
         for (line_id, line) in commands.items():
             output += parse_text_from_bytes(line, debug=debug, japanese=japanese)
@@ -538,24 +642,48 @@ class EncodedText(object):
         return output
 
 
-def process_00_subcommands(start_address, end_address, debug=True):
-    """split this text up into multiple lines
-    based on subcommands ending each line"""
+def process_00_subcommands(start_address: int, end_address: int, debug: bool = True) -> dict:
+    """
+    split this text up into multiple lines
+    based on subcommands ending each line
+    """
     return EncodedText.process_00_subcommands(start_address, end_address, debug=debug)
 
-def parse_text_from_bytes(bytes, debug=True, japanese=False):
-    """assembles a string based on bytes looked up in the chars table"""
+
+def parse_text_from_bytes(bytes, debug: bool = True, japanese: bool = False) -> str:
+    """
+    assembles a string based on bytes looked up in the chars table
+    """
     return EncodedText.from_bytes(bytes, debug=debug, japanese=japanese)
 
-def parse_text_at(address, count=10, debug=True):
-    """returns a list of bytes from an address
-    see parse_text_at2 for pretty printing"""
-    return parse_text_from_bytes(rom.interval(address, count, strings=False), debug=debug)
 
-def parse_text_at2(address, count=10, debug=True, japanese=False):
-    """returns a string of text from an address
-    this does not handle text commands"""
-    return EncodedText.parse_text_at(address, count, debug=debug, japanese=japanese)
+def parse_text_at(address: int, count: int = 10, debug: bool = True) -> str:
+    """
+    returns a list of bytes from an address
+    see parse_text_at2 for pretty printing
+    """
+    return parse_text_from_bytes(
+        rom.interval(
+            address, 
+            count, 
+            strings=False
+        ), 
+        debug=debug
+    )
+
+
+def parse_text_at2(address, count: int = 10, debug: bool = True, japanese: bool = False) -> str:
+    """
+    returns a string of text from an address
+    this does not handle text commands
+    """
+    return EncodedText.parse_text_at(
+        address,
+        count,
+        debug=debug,
+        japanese=japanese
+    )
+
 
 def parse_text_at3(address, map_group=None, map_id=None, debug=False):
     deh = script_parse_table[address]
@@ -6461,6 +6589,7 @@ def split_incbin_line_into_three(line, start_address, byte_count, rom_file=None)
     output += "INCBIN \"baserom.gbc\",$" + hex(third[0])[2:] + ",$" + hex(third[1])[2:] # no newline
     return output
 
+
 def generate_diff_insert(line_number, newline, _asm=None, debug=False):
     """generates a diff between the old main.asm and the new main.asm
     note: requires python2.7 i think? b/c of subprocess.check_output"""
@@ -6492,16 +6621,19 @@ def generate_diff_insert(line_number, newline, _asm=None, debug=False):
     newfile_fh.write(newfile)
     newfile_fh.close()
 
-    try:
-        from subprocess import CalledProcessError
-    except ImportError:
-        CalledProcessError = None
+    
 
     try:
-        diffcontent = subprocess.check_output("diff -u " + original_filename + " " + newfile_filename, shell=True)
+        diffcontent = subprocess.check_output(
+            "diff -u " + original_filename + " " + newfile_filename, shell=True
+        )
     except (AttributeError, CalledProcessError):
-        p = subprocess.Popen(["diff", "-u", original_filename, newfile_filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
+        p = subprocess.Popen(
+            ["diff", "-u", original_filename, newfile_filename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, _err = p.communicate()
         diffcontent = out
 
     os.system("rm " + original_filename)
@@ -6510,6 +6642,7 @@ def generate_diff_insert(line_number, newline, _asm=None, debug=False):
     if debug:
         logging.debug("diffcontent is {0}".format(diffcontent))
     return diffcontent
+
 
 def apply_diff(diff, try_fixing=True, do_compile=True):
     logging.info("Applying diff.")

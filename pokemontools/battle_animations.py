@@ -1,9 +1,4 @@
-# coding: utf-8
-
-from __future__ import print_function
-from __future__ import absolute_import
 import os
-from new import classobj
 
 from . import configuration
 conf = configuration.Config()
@@ -19,11 +14,10 @@ from .crystal import (
 
 from .gbz80disasm import get_local_address, get_global_address
 from .audio import sort_asms
-
-
 from .wram import read_constants
 
 rom = bytearray(load_rom())
+
 
 sfx_constants = read_constants(os.path.join(conf.path, 'constants/sfx_constants.asm'))
 class SoundEffectParam(SingleByteParam):
@@ -33,12 +27,14 @@ class SoundEffectParam(SingleByteParam):
 			return sfx_constant
 		return SingleByteParam.to_asm(self)
 
+
 anim_gfx_constants = read_constants(os.path.join(conf.path, 'constants/gfx_constants.asm'))
 class AnimGFXParam(SingleByteParam):
 	def to_asm(self):
 		if self.byte in anim_gfx_constants.keys():
 			return anim_gfx_constants[self.byte]
 		return SingleByteParam.to_asm(self)
+
 
 anims = read_constants(os.path.join(conf.path, 'constants/animation_constants.asm'))
 objs  = { k: v for k, v in anims.items() if 'ANIM_OBJ' in v }
@@ -47,11 +43,13 @@ anims = { k: v.replace('ANIM_','') for k, v in anims.items() }
 from .move_constants import moves
 anims.update(moves)
 
+
 class AnimObjParam(SingleByteParam):
 	def to_asm(self):
 		if self.byte in objs.keys():
 			return objs[self.byte]
 		return SingleByteParam.to_asm(self)
+
 
 class BGEffectParam(SingleByteParam):
 	def to_asm(self):
@@ -116,7 +114,8 @@ battle_animation_enders = [
 	'anim_ret',
 ]
 
-def create_battle_animation_classes():
+
+def create_battle_animation_classes() -> list:
 	classes = []
 	for cmd, command in battle_animation_commands.items():
 		cmd_name = command[0]
@@ -131,12 +130,13 @@ def create_battle_animation_classes():
 			params['param_types'][i] = {'name': name, 'class': class_}
 			params['size'] += class_.size
 		class_name = cmd_name + 'Command'
-		class_ = classobj(class_name, (Command,), params)
+		class_ = type(class_name, (Command,), params)
 		globals()[class_name] = class_
 		classes += [class_]
 	return classes
 
 battle_animation_classes = create_battle_animation_classes()
+
 
 
 class BattleAnimWait(Command):
@@ -277,7 +277,7 @@ def dump_battle_anims(table_address=0xc906f, num_anims=278, macros=battle_animat
 	address = table_address
 	bank = address / 0x4000
 
-	for i in xrange(num_anims):
+	for i in range(num_anims):
 		pointer_address = address
 		anim_address = rom[pointer_address] + rom[pointer_address + 1] * 0x100
 		anim_address = get_global_address(anim_address, bank)

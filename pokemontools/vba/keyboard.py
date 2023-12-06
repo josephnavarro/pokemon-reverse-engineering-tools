@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 This file constructs a networkx.DiGraph object called graph, which can be used
 to find the shortest path of keypresses on the keyboard to type a word.
 """
-from __future__ import print_function
-
 import os
-import itertools
 import networkx
 
 graph = networkx.DiGraph()
@@ -26,7 +22,8 @@ for line in graph_data.split("\n"):
 
     #print "Adding edge ("+edge_name+") "+node1+" -> "+node2
 
-def shortest_path(node1, node2):
+
+def shortest_path(node1, node2) -> list:
     """
     Figures out the shortest list of button presses to move from one letter to
     another.
@@ -41,14 +38,16 @@ def shortest_path(node1, node2):
     return buttons
     #return [convert_nodes_to_button_press(node3, node4) for (node3, node4) in zip(*(iter(networkx.shortest_path(graph, node1, node2)),) * 2)]
 
-def convert_nodes_to_button_press(node1, node2):
+
+def convert_nodes_to_button_press(node1, node2) -> str:
     """
     Determines the button necessary to switch from node1 to node2.
     """
     print("getting button press for state transition: " + node1 + " -> " + node2)
     return graph.get_edge_data(node1, node2)["key"]
 
-def plan_typing(text, current="A"):
+
+def plan_typing(text, current="A") -> list:
     """
     Plans a sequence of button presses to spell out the given text.
     """

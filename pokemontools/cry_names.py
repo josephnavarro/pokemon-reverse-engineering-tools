@@ -1,5 +1,3 @@
-# coding: utf-8
-
 cry_names = [
 	'Nidoran_M',
 	'Nidoran_F',

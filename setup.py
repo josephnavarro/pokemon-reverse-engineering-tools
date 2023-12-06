@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 
@@ -10,9 +7,9 @@ except ImportError:
     from distutils.core import setup
 
 # for uploading to pypi
-if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist upload')
-    sys.exit()
+# if sys.argv[-1] == 'publish':
+#     os.system('python setup.py sdist upload')
+#     sys.exit()
 
 # There's some intersection with requirements.txt but pypi can't handle git
 # dependencies.

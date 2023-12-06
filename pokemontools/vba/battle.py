@@ -1,19 +1,22 @@
 """
 Code that attempts to model a battle.
 """
-
 from pokemontools.vba.vba import crystal as emulator
 import pokemontools.vba.vba as vba
+
+
 
 class BattleException(Exception):
     """
     Something went terribly wrong in a battle.
     """
 
-class EmulatorController(object):
+
+class EmulatorController:
     """
     Controls the emulator. I don't have a good reason for this.
     """
+
 
 class Battle(EmulatorController):
     """
@@ -28,19 +31,29 @@ class Battle(EmulatorController):
         """
         self.emulator = emulator
 
-    def is_in_battle(self):
+    def is_in_battle(self) -> bool:
         """
         @rtype: bool
         """
         return self.emulator.is_in_battle()
 
-    def is_input_required(self):
+    def is_input_required(self) -> bool:
         """
         Detects if the battle is waiting for player input.
         """
-        return self.is_player_turn() or self.is_mandatory_switch() or self.is_switch_prompt() or self.is_levelup_screen() or self.is_make_room_for_move_prompt()
+        if self.is_player_turn():
+            return True
+        if self.is_mandatory_switch():
+            return True
+        if self.is_switch_prompt():
+            return True
+        if self.is_levelup_screen():
+            return True
+        if self.is_make_room_for_move_prompt():
+            return True
+        return False
 
-    def is_fight_pack_run_menu(self):
+    def is_fight_pack_run_menu(self) -> bool:
         """
         Attempts to detect if the current menu is fight-pack-run. This is only
         for whether or not the player needs to choose what to do next.
@@ -49,7 +62,7 @@ class Battle(EmulatorController):
         screentext = self.emulator.get_text()
         return all([sign in screentext for sign in signs])
 
-    def select_battle_menu_action(self, action, execute=True):
+    def select_battle_menu_action(self, action: str, execute=True):
         """
         Moves the cursor to the requested action and selects it.
 
@@ -60,7 +73,7 @@ class Battle(EmulatorController):
                 "This isn't the fight-pack-run menu."
             )
 
-        action = action.lower()
+        action: str = action.lower()
 
         action_map = {
             "fight": (1, 1),
@@ -69,7 +82,7 @@ class Battle(EmulatorController):
             "run":   (2, 2),
         }
 
-        if action not in action_map.keys():
+        if action not in action_map:
             raise Exception(
                 "Unexpected requested action {0}".format(action)
             )
@@ -173,13 +186,13 @@ class Battle(EmulatorController):
         # select the requested attack
         self.select_attack(move_number)
 
-    def is_player_turn(self):
+    def is_player_turn(self) -> bool:
         """
         Detects if the battle is waiting for the player to choose an attack.
         """
         return self.is_fight_pack_run_menu()
 
-    def is_trainer_switch_prompt(self):
+    def is_trainer_switch_prompt(self) -> bool:
         """
         Detects if the battle is waiting for the player to choose whether or
         not to switch pokemon. This is the prompt that asks yes/no for whether
@@ -188,22 +201,26 @@ class Battle(EmulatorController):
         """
         return self.emulator.is_trainer_switch_prompt()
 
-    def is_wild_switch_prompt(self):
+    def is_wild_switch_prompt(self) -> bool:
         """
         Detects if the battle is waiting for the player to choose whether or
         not to continue to fight the wild pokemon.
         """
         return self.emulator.is_wild_switch_prompt()
 
-    def is_switch_prompt(self):
+    def is_switch_prompt(self) -> bool:
         """
         Detects both trainer and wild switch prompts (for prompting whether to
         switch pokemon). This is a yes/no box and not the actual pokemon
         selection menu.
         """
-        return self.is_trainer_switch_prompt() or self.is_wild_switch_prompt()
+        if self.is_trainer_switch_prompt():
+            return True
+        if self.is_wild_switch_prompt():
+            return True
+        return False
 
-    def is_mandatory_switch(self):
+    def is_mandatory_switch(self) -> bool:
         """
         Detects if the battle is waiting for the player to choose a next
         pokemon.
@@ -220,7 +237,7 @@ class Battle(EmulatorController):
         else:
             return False
 
-    def is_levelup_screen(self):
+    def is_levelup_screen(self) -> bool:
         """
         Detects the levelup stats screen.
         """
@@ -236,7 +253,7 @@ class Battle(EmulatorController):
         else:
             return True
 
-    def is_evolution_screen(self):
+    def is_evolution_screen(self) -> bool:
         """
         What? MEW is evolving!
         """
@@ -257,7 +274,7 @@ class Battle(EmulatorController):
             else:
                 return True
 
-    def is_evolved_screen(self):
+    def is_evolved_screen(self) -> bool:
         """
         Checks if the screen is the "evolved into METAPOD!" screen. Note that
         this only works inside of a battle. This is because there may be other
@@ -271,13 +288,13 @@ class Battle(EmulatorController):
         address = 0x4bb1
         values = [164, 181, 174, 171, 181, 164, 163, 127, 168, 173, 179, 174, 79]
 
-        for (index, value) in enumerate(values):
+        for index, value in enumerate(values):
             if self.emulator.vba.read_memory_at(address + index) != value:
                 return False
         else:
             return True
 
-    def is_make_room_for_move_prompt(self):
+    def is_make_room_for_move_prompt(self) -> bool:
         """
         Detects the prompt that asks whether to make room for a move.
         """
@@ -463,6 +480,7 @@ class BattleStrategy(Battle):
         Choose yes/no then handle learning the move.
         """
         raise NotImplementedError
+
 
 class SpamBattleStrategy(BattleStrategy):
     """

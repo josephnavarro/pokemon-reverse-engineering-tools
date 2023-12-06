@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-from __future__ import absolute_import
 import networkx as nx
-
+import networkx.readwrite.json_graph as json_graph
 from .romstr import (
     RomStr,
     relative_jumps,
     call_commands,
     relative_unconditional_jumps,
 )
+
 
 class RomGraph(nx.DiGraph):
     """
@@ -35,12 +32,14 @@ class RomGraph(nx.DiGraph):
     end_address = 0x4000 * 0x03 # only do the first bank? sure..
 
     # where is the rom stored?
-    rompath = "../baserom.gbc"
+    # rompath = "../baserom.gbc"
 
-    def __init__(self, rom=None, **kwargs):
+    def __init__(self, rom=None, *, rompath="../baserom.gbc", **kwargs):
         """
         Loads and parses the ROM into a function graph.
         """
+        self.rompath: str = rompath
+
         # continue the initialization
         nx.DiGraph.__init__(self, **kwargs)
 
@@ -57,28 +56,27 @@ class RomGraph(nx.DiGraph):
         """
         Creates a RomStr from rompath.
         """
-        file_handler = open(self.rompath, "r")
-        self.rom = RomStr(file_handler.read())
-        file_handler.close()
+        with open(self.rompath, "r") as f:
+            self.rom = RomStr(f.read())
 
     def parse(self):
         """
         Parses the ROM starting with the first function address. Each
             function is disassembled and parsed to find where else it leads to.
         """
-        functions = {}
+        functions: dict = {}
 
-        address = self.start_address
+        address: int = self.start_address
 
-        other_addresses = set()
+        other_addresses: set = set()
 
-        count = 0
+        count: int = 0
 
         while True:
             if count > 3000:
                 break
 
-            if address < self.end_address and (address not in functions.keys()) and address >= 0x150:
+            if (address < self.end_address) and (address not in functions.keys()) and (address >= 0x150):
                 # address is okay to parse at, keep going
                 pass
             elif len(other_addresses) > 0:
@@ -93,7 +91,7 @@ class RomGraph(nx.DiGraph):
 
             # check if there are any nops (probably not a function)
             nops = 0
-            for (id, command) in func.asm_commands.items():
+            for (_id, command) in func.asm_commands.items():
                 if "id" in command and command["id"] == 0x0:
                     nops += 1
 
@@ -137,13 +135,11 @@ class RomGraph(nx.DiGraph):
 
     def to_d3(self):
         """
-        Exports to d3.js because we're gangster like that.
+        Exports to d3.js
         """
-        import networkx.readwrite.json_graph as json_graph
         content = json_graph.dumps(self)
-        fh = open("crystal/crystal.json", "w")
-        fh.write(content)
-        fh.close()
+        with open("crystal/crystal.json", "w") as fh:
+            fh.write(content)
 
     def to_gephi(self):
         """
@@ -151,19 +147,20 @@ class RomGraph(nx.DiGraph):
         """
         nx.write_gexf(self, "graph.gexf")
 
+
 class RedGraph(RomGraph):
     """
     Not implemented. Go away.
     """
-
     rompath = "../pokered-baserom.gbc"
+
 
 class CryGraph(RomGraph):
     exclusions = [
         [0x000, 0x149],
     ]
-
     rompath = "../baserom.gbc"
+
 
 if __name__ == "__main__":
     crygraph = CryGraph()

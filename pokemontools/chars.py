@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from copy import copy
 
 # this is straight out of ../preprocessor.py because i'm lazy
@@ -273,8 +272,8 @@ jap_chars.update({
     0xE9: "ァ",
 })
 
-#some of the japanese characters can probably fit into the english table
-#without overriding any of the other mappings.
+# some of the japanese characters can probably fit into the english table
+# without overriding any of the other mappings.
 for key, value in jap_chars.items():
     if key not in chars.keys():
         chars[key] = value

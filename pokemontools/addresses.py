@@ -2,7 +2,7 @@
 Common methods used against addresses.
 """
 
-def is_valid_address(address):
+def is_valid_address(address) -> bool:
     """is_valid_rom_address"""
     if address == None:
         return False

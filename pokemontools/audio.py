@@ -1,6 +1,3 @@
-# coding: utf-8
-
-from __future__ import absolute_import
 import os
 
 from math import ceil
@@ -27,8 +24,9 @@ from . import configuration
 conf = configuration.Config()
 
 
-def is_comment(asm):
+def is_comment(asm) -> bool:
 	return asm.startswith(';')
+
 
 def asm_sort(asm_def):
 	"""
@@ -47,7 +45,8 @@ def asm_sort(asm_def):
 		asm
 	)
 
-def sort_asms(asms):
+
+def sort_asms(asms: list) -> list:
 	"""
 	Sort and remove duplicates from an asm list.
 
@@ -63,7 +62,8 @@ def sort_asms(asms):
 		address, last_address = asm[0], asm[2]
 	return trimmed
 
-def insert_asm_incbins(asms):
+
+def insert_asm_incbins(asms: list) -> list:
 	"""
 	Insert baserom incbins between address gaps in asm lists.
 	"""
@@ -75,6 +75,7 @@ def insert_asm_incbins(asms):
 			if last_address < next_address and last_address / 0x4000 == next_address / 0x4000:
 				new_asms += [generate_incbin_asm(last_address, next_address)]
 	return new_asms
+
 
 def generate_incbin_asm(start_address, end_address):
 	"""
@@ -91,13 +92,14 @@ def generate_incbin_asm(start_address, end_address):
 	)
 	return incbin
 
+
 def generate_label_asm(label, address):
 	"""
 	Return label definition text at a given address.
 
 	Format: '{label}: ; {address}'
 	"""
-	label_text = '%s: ; %x' % (label, address)
+	label_text = '{0:s}: ; {1:x}'.format(label, address)
 	return (address, label_text, address)
 
 
@@ -122,12 +124,15 @@ class NybbleParam:
 	@staticmethod
 	def from_asm(value):
 		return value
+	
 
 class HiNybbleParam(NybbleParam):
 	which = 'hi'
 
+
 class LoNybbleParam(NybbleParam):
 	which = 'lo'
+
 
 class PitchParam(HiNybbleParam):
 	def to_asm(self):
@@ -142,6 +147,7 @@ class PitchParam(HiNybbleParam):
 				pitch += '_'
 		return pitch
 
+
 class NoteDurationParam(LoNybbleParam):
 	def to_asm(self):
 		self.nybble += 1
@@ -151,6 +157,7 @@ class NoteDurationParam(LoNybbleParam):
 	def from_asm(value):
 		value = str(int(value) - 1)
 		return LoNybbleParam.from_asm(value)
+
 
 class Note(Command):
 	macro_name = "note"
@@ -183,8 +190,10 @@ class Note(Command):
 			# can't fit bytes into nybbles
 			if obj.size > 0.5:
 				if current_address % 1:
+					# TODO: What??????????
 					current_address = int(ceil(current_address))
 				if size % 1:
+					# TODO: What did they mean by this
 					size = int(ceil(size))
 
 		self.params = dict(enumerate(self.params))
@@ -208,6 +217,7 @@ class SoundCommand(Note):
 	allowed_lengths = [3]
 	override_byte_check = True
 	is_rgbasm_macro = False
+
 
 class Noise(SoundCommand):
 	macro_name = "noise"
@@ -375,7 +385,7 @@ class Sound:
 	def parse_header(self):
 		self.num_channels = (rom[self.address] >> 6) + 1
 		self.channels = []
-		for ch in xrange(self.num_channels):
+		for ch in range(self.num_channels):
 			current_channel = (rom[self.address] & 0xf) + 1
 			self.address += 1
 			address = rom[self.address] + rom[self.address + 1] * 0x100

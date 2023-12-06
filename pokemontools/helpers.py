@@ -2,15 +2,18 @@
 Generic functions that should be reusable anywhere in pokemontools.
 """
 import os
+import errno
 
-def index(seq, f):
+
+def index(seq, f) -> int:
     """
     return the index of the first item in seq
     where f(item) == True.
     """
-    return next((i for i in xrange(len(seq)) if f(seq[i])), None)
+    return next((i for i in range(len(seq)) if f(seq[i])), None)
 
-def grouper(some_list, count=2):
+
+def grouper(some_list, count=2) -> list:
     """
     splits a list into sublists
 
@@ -19,7 +22,8 @@ def grouper(some_list, count=2):
     """
     return [some_list[i:i+count] for i in range(0, len(some_list), count)]
 
-def flattener(x):
+
+def flattener(x) -> list:
     """
     flattens a list of sublists into just one list (generator)
     """
@@ -32,13 +36,15 @@ def flattener(x):
             for j in flattener(i):
                 yield j
 
-def flatten(x):
+
+def flatten(x) -> list:
     """
     flattens a list of sublists into just one list
     """
     return list(flattener(x))
 
-def mkdir_p(path):
+
+def mkdir_p(path: str):
     """
     Make a directory at a given path.
     """
