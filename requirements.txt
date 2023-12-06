@@ -1,4 +1,4 @@
--e git://github.com/drj11/pypng.git@master#egg=pypng
+-e git://github.com/drj11/pypng.git@main#egg=pypng
 
 # for the map editor, pillow instead of PIL
 pillow
